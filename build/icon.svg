@@ -1,0 +1,35 @@
+<!--
+  CourseCal app icon.
+
+  A calendar page whose date cells are replaced by three bars rising left to
+  right — the app's one idea: coursework sorted by priority, not just by date.
+  Colors are the app's own surface and accent from src/styles/theme.css.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232833"/>
+      <stop offset="1" stop-color="#161922"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#4d8ff0"/>
+      <stop offset="1" stop-color="#8ebcff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded plate. Inset from the canvas so the mask Windows applies to
+       taskbar icons never clips the shape. -->
+  <rect x="48" y="56" width="416" height="400" rx="72" fill="url(#plate)"/>
+  <rect x="48" y="56" width="416" height="400" rx="72" fill="none"
+        stroke="#3a4256" stroke-width="8"/>
+
+  <!-- Calendar header band and binding rings. -->
+  <path d="M48 128a72 72 0 0 1 72-72h272a72 72 0 0 1 72 72v24H48z" fill="#6ea8fe"/>
+  <rect x="150" y="26" width="30" height="72" rx="15" fill="#c9dcff"/>
+  <rect x="332" y="26" width="30" height="72" rx="15" fill="#c9dcff"/>
+
+  <!-- Three ascending bars: the priority ranking. -->
+  <rect x="136" y="332" width="66" height="72" rx="20" fill="url(#bar)" opacity="0.55"/>
+  <rect x="223" y="272" width="66" height="132" rx="20" fill="url(#bar)" opacity="0.8"/>
+  <rect x="310" y="204" width="66" height="200" rx="20" fill="url(#bar)"/>
+</svg>

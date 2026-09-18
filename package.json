@@ -1,0 +1,69 @@
+{
+  "name": "coursecal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Free, open-source desktop calendar for tracking college coursework by priority",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "package": "npm run build && electron-builder --win portable"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^1.47.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.3",
+    "vite": "^6.3.5",
+    "vite-plugin-electron": "^0.29.0",
+    "vitest": "^3.2.4"
+  },
+  "build": {
+    "appId": "com.coursecal.app",
+    "productName": "CourseCal",
+    "copyright": "made by claude and mhei",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "build/icon.png"
+    ],
+    "compression": "maximum",
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "CourseCalx64.${ext}",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "unpackDirName": "CourseCal",
+      "requestExecutionLevel": "user"
+    }
+  },
+  "license": "MIT"
+}

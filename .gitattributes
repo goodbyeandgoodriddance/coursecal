@@ -1,0 +1,9 @@
+# Normalize to LF in the repository; Git restores native endings on checkout.
+# Without this, contributors on macOS/Linux see whole-file diffs against a
+# repo authored on Windows.
+* text=auto eol=lf
+
+# Never touch binary assets.
+*.png binary
+*.ico binary
+*.woff2 binary

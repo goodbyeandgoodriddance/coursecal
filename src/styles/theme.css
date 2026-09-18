@@ -1,0 +1,2541 @@
+/* ---------------------------------------------------------------------------
+   CourseCal theme — dark, dense, modern.
+
+   Two color systems live here and must not be confused:
+     - COURSE accents (--course-N) identify *which* course something belongs to
+     - URGENCY colors (--urgency-*) say *how soon* it is due
+   A row therefore carries a course stripe and an urgency tint independently.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* Surfaces, darkest to lightest */
+  --bg: #0f1115;
+  --surface: #161922;
+  --surface-2: #1c2029;
+  --surface-3: #232833;
+  --surface-hover: #262c38;
+
+  --border: #2a3040;
+  --border-strong: #3a4256;
+
+  /* Text */
+  --text: #e6e8ee;
+  --text-muted: #9aa3b5;
+  --text-faint: #6b7487;
+
+  --accent: #6ea8fe;
+  --accent-dim: #2d4a7a;
+
+  /* Urgency ramp: calm when distant, hot when late */
+  --urgency-overdue: #ff6b6b;
+  --urgency-today: #ffa94d;
+  --urgency-soon: #ffd43b;
+  --urgency-week: #74c0fc;
+  --urgency-later: #6b7487;
+
+  --ok: #51cf66;
+  --warn: #ffa94d;
+  --danger: #ff6b6b;
+
+  /* Course accents — 8 hues, evenly spaced and matched for lightness so no
+     course reads as louder than another on the dark background. */
+  --course-0: #6ea8fe;
+  --course-1: #63e6be;
+  --course-2: #ffa94d;
+  --course-3: #da77f2;
+  --course-4: #ff8787;
+  --course-5: #a9e34b;
+  --course-6: #4dd4e8;
+  --course-7: #f783ac;
+
+  --radius: 8px;
+  --radius-sm: 5px;
+
+  /* Dense by intent: this is a tool you keep open, not a document. */
+  --row-h: 34px;
+  --gap: 10px;
+
+  /* Bundled in src/main.tsx. The system faces stay on as fallbacks so that if a
+     font file ever fails to load the app degrades rather than going blank. */
+  --font: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Consolas, monospace;
+
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+
+  /* Must match the ::-webkit-scrollbar width rule. The week grid reserves this
+     on its non-scrolling rows so their columns line up with the scrolling one. */
+  --scrollbar-w: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13.5px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  /* Tabular figures everywhere: this UI is full of columns of percentages,
+     scores, dates and times that must not jitter as their digits change. */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  /* A desktop app window should not rubber-band or text-select like a page. */
+  overflow: hidden;
+  user-select: none;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  width: 100%;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+button {
+  cursor: pointer;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+button:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Icon + label buttons. `inline-flex` so they still size to their content and
+   sit inline exactly where the text-only versions did. */
+button.with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+button.with-icon.small {
+  font-size: 11px;
+  padding: 2px 8px;
+  gap: 4px;
+}
+
+/* Square button holding only an icon, e.g. a modal close or a row delete. */
+button.icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  line-height: 1;
+  border-color: transparent;
+}
+
+button.icon-only:hover {
+  border-color: var(--border-strong);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  background: var(--surface-3);
+  border-color: var(--border);
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b1220;
+  font-weight: 600;
+}
+
+button.primary:hover {
+  filter: brightness(1.08);
+}
+
+/* A faint resting border so ghost buttons read as controls rather than as
+   plain text, without becoming as loud as a filled button. */
+button.ghost {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--border) 60%, transparent);
+  color: var(--text-muted);
+}
+
+button.ghost:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+button.danger {
+  color: var(--danger);
+  border-color: rgba(255, 107, 107, 0.35);
+  background: transparent;
+}
+
+button.danger:hover {
+  background: rgba(255, 107, 107, 0.12);
+  border-color: rgba(255, 107, 107, 0.4);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 5px;
+  border: 2px solid var(--bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* --- App shell ------------------------------------------------------------ */
+
+/* The window is frameless (titleBarStyle: 'hidden'), so this bar stands in for
+   the OS title bar. Windows still draws the minimize/maximize/close buttons
+   into a reserved overlay on the right — see titleBarOverlay in
+   electron/main.ts — which is why nothing interactive may sit there. */
+.titlebar {
+  height: 32px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  /* The whole bar drags the window. */
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.titlebar-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--text-faint);
+}
+
+/* Anything clickable inside the bar must opt out of the drag region. */
+.titlebar button,
+.titlebar a,
+.titlebar .no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 196px 1fr;
+  /* The title bar takes the first 32px of the window. */
+  height: calc(100% - 32px);
+}
+
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  gap: 4px;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0 8px 14px;
+}
+
+.brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.brand-version {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.nav-button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 7px 8px;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.nav-button:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.nav-button.active {
+  background: var(--surface-3);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.nav-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-key {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-faint);
+  font-family: var(--mono);
+}
+
+.sidebar-spacer {
+  flex: 1;
+}
+
+.sidebar-footer {
+  border-top: 1px solid var(--border);
+  padding: 10px 8px 0;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.term-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+}
+
+/* The active term decides what every view shows, so it is white and sized
+   like a control you are meant to notice — not a muted footnote. */
+.term-select {
+  padding: 7px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+.term-select:hover {
+  border-color: var(--accent);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.main-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 40px;
+}
+
+.view-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.view-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+
+.view-subtitle {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.section-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin: 18px 0 7px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-label:first-child {
+  margin-top: 0;
+}
+
+.section-label .count {
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.empty {
+  color: var(--text-faint);
+  font-size: 12.5px;
+  padding: 26px 14px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.empty-icon {
+  color: var(--text-faint);
+  opacity: 0.7;
+}
+
+.empty-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.empty-text {
+  max-width: 44ch;
+  line-height: 1.5;
+}
+
+.empty button {
+  margin-top: 4px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+/* --- Quick add ----------------------------------------------------------- */
+
+.quickadd {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex: none;
+}
+
+.quickadd-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.quickadd-input {
+  font-size: 13.5px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+}
+
+.quickadd-hint {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 17px;
+  flex-wrap: wrap;
+}
+
+.parse-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11.5px;
+  color: var(--text);
+}
+
+.parse-chip.incomplete {
+  border-color: rgba(255, 169, 77, 0.45);
+  color: var(--warn);
+}
+
+.parse-chip .sep {
+  color: var(--text-faint);
+}
+
+/* --- Item rows ----------------------------------------------------------- */
+
+.today-banner {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255, 169, 77, 0.1);
+  border: 1px solid rgba(255, 169, 77, 0.35);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 12.5px;
+  margin-bottom: 14px;
+}
+
+.today-banner.has-overdue {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.4);
+}
+
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 3px 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--row-h);
+  padding: 4px 10px 4px 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.item-row:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+/* The course stripe: which course, at a glance, down the left edge. */
+.item-stripe {
+  align-self: stretch;
+  background: var(--course-color, var(--border-strong));
+}
+
+/* Custom checkbox. Sized to fit the existing 20px grid column and keep the
+   same 9px offset, so swapping away from the native control shifts nothing.
+   The check is an inline SVG data URI rather than a pseudo-element so the
+   whole control is one paintable box. */
+.item-check,
+.checkbox-row input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  /* Both resets matter. The shared `input` rule above sets `padding: 6px 8px`,
+     and a border-box box cannot shrink below its own padding + border — that
+     padding alone floored the width at 18px and made the box non-square.
+     `min-width: 0` stops the grid track's `min-width: auto` doing the same. */
+  padding: 0;
+  min-width: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface-2);
+  cursor: pointer;
+  position: relative;
+}
+
+.item-check {
+  margin-left: 9px;
+  /* Don't stretch to fill the 20px grid track. */
+  justify-self: start;
+}
+
+.item-check:hover,
+.checkbox-row input[type='checkbox']:hover {
+  border-color: var(--accent);
+}
+
+.item-check:checked,
+.checkbox-row input[type='checkbox']:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230b1220' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 14px;
+}
+
+.item-check:focus-visible,
+.checkbox-row input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.item-main {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.item-title {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-row.is-done .item-title {
+  text-decoration: line-through;
+  color: var(--text-faint);
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex: none;
+}
+
+.item-due {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Urgency is expressed on the due text, where the user is already looking. */
+.urgency-overdue .item-due {
+  color: var(--urgency-overdue);
+  font-weight: 600;
+}
+
+.urgency-today .item-due {
+  color: var(--urgency-today);
+  font-weight: 600;
+}
+
+.urgency-soon .item-due {
+  color: var(--urgency-soon);
+}
+
+.urgency-week .item-due {
+  color: var(--urgency-week);
+}
+
+.urgency-overdue {
+  border-left-color: var(--urgency-overdue);
+}
+
+.item-row.urgency-overdue {
+  background: rgba(255, 107, 107, 0.07);
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.item-row.urgency-today {
+  background: rgba(255, 169, 77, 0.06);
+  border-color: rgba(255, 169, 77, 0.26);
+}
+
+.course-badge {
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--course-color, var(--text-muted));
+  background: color-mix(in srgb, var(--course-color, #888) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--course-color, #888) 35%, transparent);
+  font-family: var(--mono);
+}
+
+.pill {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+}
+
+.pill.overdue {
+  color: var(--urgency-overdue);
+  border-color: rgba(255, 107, 107, 0.5);
+  background: rgba(255, 107, 107, 0.12);
+}
+
+.pill.high {
+  color: var(--warn);
+  border-color: rgba(255, 169, 77, 0.5);
+}
+
+.pill.type {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-faint);
+}
+
+.weight-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Score bar: a compact visual of *why* a row sits where it does. */
+.score-bar {
+  flex: none;
+  width: 46px;
+  height: 7px;
+  background: var(--surface-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  min-width: 2px;
+  background: linear-gradient(90deg, var(--accent), #b197fc);
+  border-radius: 3px;
+}
+
+.score-number {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-faint);
+  width: 20px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.rank {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  width: 16px;
+  text-align: right;
+  flex: none;
+}
+
+/* --- Modal --------------------------------------------------------------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 14, 0.66);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 60px 20px 20px;
+  z-index: 50;
+  overflow-y: auto;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 520px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.2px;
+}
+
+.field-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.field-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.field-row.thirds {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.segmented {
+  display: flex;
+  gap: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.segmented button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  border-radius: 4px;
+}
+
+.segmented button.active {
+  background: var(--surface-hover);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
+/* --- Month view ---------------------------------------------------------- */
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--border);
+  gap: 1px;
+}
+
+.month-dow {
+  background: var(--surface-2);
+  padding: 6px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.month-cell {
+  background: var(--surface);
+  min-height: 92px;
+  padding: 5px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* Without these a long item title widens the grid track and bleeds into
+     the next day's column. */
+  min-width: 0;
+  overflow: hidden;
+  cursor: pointer;
+  border: none;
+  border-radius: 0;
+  text-align: left;
+  align-items: stretch;
+}
+
+.month-cell:hover {
+  background: var(--surface-2);
+}
+
+.month-cell.outside {
+  background: var(--bg);
+}
+
+.month-cell.outside .month-daynum {
+  color: var(--text-faint);
+  opacity: 0.55;
+}
+
+.month-cell.is-today .month-daynum {
+  background: var(--accent);
+  color: #0b1220;
+  font-weight: 700;
+}
+
+.month-daynum {
+  font-size: 11px;
+  color: var(--text-muted);
+  width: 19px;
+  height: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-chip {
+  /* Block, not flex: text-overflow: ellipsis has no effect on a flex
+     container's own text, so a long title would clip mid-word. */
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  line-height: 15px;
+  font-size: 10.5px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--course-color, #888) 18%, var(--surface-2));
+  border-left: 2px solid var(--course-color, var(--border-strong));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.month-chip.is-done {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+.month-chip.is-overdue {
+  border-left-color: var(--urgency-overdue);
+}
+
+.month-more {
+  font-size: 10px;
+  color: var(--text-faint);
+  padding-left: 3px;
+}
+
+/* --- Week view ----------------------------------------------------------- */
+
+.week-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.week-head {
+  display: grid;
+  grid-template-columns: 52px repeat(7, minmax(0, 1fr));
+  /* Matches the scrolling body's reserved gutter; without this the day
+     columns here sit wider than the hour grid below and the DUE row's
+     dividers drift out of alignment with it. */
+  padding-right: var(--scrollbar-w);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.week-head-cell {
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-left: 1px solid var(--border);
+}
+
+.week-head-cell:first-child {
+  border-left: none;
+}
+
+.week-head-cell.is-today {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.week-head-cell .dow {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  color: var(--text-faint);
+}
+
+.week-allday {
+  display: grid;
+  grid-template-columns: 52px repeat(7, minmax(0, 1fr));
+  /* Matches the scrolling body's reserved gutter; without this the day
+     columns here sit wider than the hour grid below and the DUE row's
+     dividers drift out of alignment with it. */
+  padding-right: var(--scrollbar-w);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  min-height: 26px;
+}
+
+.week-allday-label {
+  font-size: 9.5px;
+  color: var(--text-faint);
+  padding: 5px 6px;
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.week-allday-cell {
+  border-left: 1px solid var(--border);
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.week-body {
+  display: grid;
+  grid-template-columns: 52px repeat(7, minmax(0, 1fr));
+  /* Always reserve the scrollbar track, whether or not it is currently needed,
+     so the column widths never change as content grows. */
+  scrollbar-gutter: stable;
+  position: relative;
+  background: var(--surface);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.week-hours {
+  border-right: 1px solid var(--border);
+}
+
+.week-hour-label {
+  height: 44px;
+  font-size: 10px;
+  color: var(--text-faint);
+  padding: 2px 6px 0 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-col {
+  position: relative;
+  border-left: 1px solid var(--border);
+}
+
+.week-hour-line {
+  height: 44px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.week-block {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 10.5px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--course-color, #888) 22%, var(--surface-2));
+  border-left: 2.5px solid var(--course-color, var(--border-strong));
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.week-block .block-code {
+  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.week-block .block-sub {
+  color: var(--text-muted);
+  font-size: 9.5px;
+}
+
+.week-due-marker {
+  position: absolute;
+  /* Inset from the left so a marker landing on a class block does not cover
+     the block's course code. */
+  left: 26%;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--surface-3);
+  border: 1px solid var(--course-color, var(--border-strong));
+  border-left-width: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.week-due-marker.is-overdue {
+  border-color: var(--urgency-overdue);
+}
+
+.due-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--course-color, var(--text-muted));
+  flex: none;
+}
+
+/* --- Courses view -------------------------------------------------------- */
+
+.course-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--course-color, var(--border-strong));
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.course-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.course-code {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--course-color, var(--text));
+  font-size: 13px;
+}
+
+.course-title {
+  font-weight: 600;
+}
+
+.course-instructor {
+  color: var(--text-faint);
+  font-size: 11.5px;
+}
+
+.grade-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.grade-value {
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+
+.grade-caption {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+
+.grade-bar {
+  height: 5px;
+  background: var(--surface-3);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 9px;
+  display: flex;
+}
+
+.grade-bar-graded {
+  background: var(--course-color, var(--accent));
+}
+
+.grade-bar-pending {
+  background: color-mix(in srgb, var(--course-color, #888) 28%, transparent);
+}
+
+.meeting-list,
+.course-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 10px;
+}
+
+.meeting-row,
+.course-item-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.meeting-row:hover,
+.course-item-row:hover {
+  background: var(--surface-3);
+}
+
+.meeting-day {
+  font-family: var(--mono);
+  font-weight: 700;
+  width: 30px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.meeting-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  width: 132px;
+  font-size: 11.5px;
+}
+
+.meeting-kind {
+  color: var(--text-faint);
+  font-size: 11px;
+  text-transform: capitalize;
+}
+
+.meeting-location {
+  color: var(--text-faint);
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.subcard {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.color-swatches {
+  display: flex;
+  gap: 5px;
+}
+
+.swatch {
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.swatch.selected {
+  border-color: var(--text);
+}
+
+/* --- Settings ------------------------------------------------------------ */
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.slider-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.slider-name {
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.slider-value {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.slider-desc {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  padding: 0;
+  border: none;
+  height: 18px;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+input[type='range']:focus {
+  box-shadow: none;
+  border: none;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--surface-3);
+  border-radius: 2px;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+}
+
+.preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.preview-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 4px 8px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--course-color, var(--border-strong));
+}
+
+.preview-row .preview-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lead-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lead-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 4px 2px 10px;
+  font-size: 11.5px;
+}
+
+.lead-chip button {
+  background: transparent;
+  border: none;
+  padding: 0 4px;
+  color: var(--text-faint);
+  line-height: 1;
+}
+
+.lead-chip button:hover {
+  color: var(--danger);
+  background: transparent;
+}
+
+/* --- Workload chart ------------------------------------------------------ */
+
+.chart-card {
+  max-width: 760px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px 10px;
+}
+
+.chart-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.chart-title {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.chart-note {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-key {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.tick-label {
+  fill: var(--text-faint);
+  font-size: 10px;
+  font-family: var(--font);
+}
+
+.value-label {
+  fill: var(--text-muted);
+  font-size: 10px;
+  font-family: var(--mono);
+}
+
+.grid-line {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.kbd {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 4px;
+  color: var(--text-muted);
+}
+
+/* --- Confirm dialog ------------------------------------------------------ */
+
+.confirm-modal {
+  max-width: 440px;
+}
+
+.confirm-modal .modal-header {
+  gap: 9px;
+}
+
+.confirm-icon {
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  flex: none;
+}
+
+.confirm-icon.is-destructive {
+  color: var(--danger);
+}
+
+.confirm-body {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.confirm-body strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Paragraphs inside a dialog body, spaced without a global p rule. */
+.confirm-body p {
+  margin: 0 0 9px;
+}
+
+.confirm-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* A destructive confirm is filled red rather than accent-blue, so the
+   dangerous button never looks like the safe default. */
+button.primary.destructive {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #2a0a0a;
+}
+
+/* --- Export / import feedback -------------------------------------------- */
+
+.warn-note {
+  border-left: 2px solid var(--warn);
+  padding-left: 8px;
+  line-height: 1.5;
+}
+
+.file-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 7px 9px;
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  line-height: 1.45;
+  background: rgba(81, 207, 102, 0.1);
+  border: 1px solid rgba(81, 207, 102, 0.3);
+  color: var(--text);
+  /* Exported paths are long and must not widen the settings column. */
+  overflow-wrap: anywhere;
+}
+
+.file-message svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--ok);
+}
+
+.file-message.is-bad {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.file-message.is-bad svg {
+  color: var(--danger);
+}
+
+/* --- Course work list icons ---------------------------------------------- */
+
+.course-item-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.course-item-state {
+  flex: none;
+  color: var(--text-faint);
+}
+
+.course-item-state.is-done {
+  color: var(--ok);
+}
+
+/* --- Product polish + onboarding ----------------------------------------- */
+
+/* A slightly softer hierarchy keeps dense information readable without
+   changing the dark-first character of CourseCal. */
+:root {
+  --surface-raised: #202530;
+  --accent-soft: rgba(110, 168, 254, 0.12);
+  --focus-ring: rgba(110, 168, 254, 0.38);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 18px 55px rgba(0, 0, 0, 0.48), 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+button,
+input,
+textarea,
+select,
+.card,
+.item-row,
+.course-card {
+  transition:
+    background-color 0.14s ease,
+    border-color 0.14s ease,
+    box-shadow 0.14s ease,
+    opacity 0.14s ease,
+    transform 0.08s ease;
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--text-faint) 78%, transparent);
+}
+
+input[aria-invalid='true'] {
+  border-color: color-mix(in srgb, var(--danger) 70%, var(--border));
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.12);
+}
+
+.titlebar {
+  /* Keep this exactly aligned with Electron's titleBarOverlay background. */
+  background: var(--surface);
+}
+
+.app {
+  grid-template-columns: 206px minmax(0, 1fr);
+}
+
+.sidebar {
+  padding: 16px 11px 12px;
+  background: linear-gradient(180deg, #171a23 0%, var(--surface) 100%);
+}
+
+.brand {
+  position: relative;
+  padding: 2px 9px 17px 25px;
+}
+
+.brand::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 18px rgba(110, 168, 254, 0.48);
+}
+
+.brand-name {
+  font-size: 15.5px;
+  letter-spacing: -0.35px;
+}
+
+.nav-button {
+  position: relative;
+  min-height: 34px;
+  padding: 8px 9px;
+  border: 1px solid transparent;
+}
+
+.nav-button.active {
+  background: linear-gradient(90deg, rgba(110, 168, 254, 0.13), rgba(110, 168, 254, 0.035));
+  border-color: rgba(110, 168, 254, 0.14);
+  color: #f3f6fb;
+}
+
+.nav-button.active::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.nav-button.active .nav-icon,
+.nav-button.active .nav-key {
+  color: var(--accent);
+}
+
+.sidebar-footer {
+  padding: 12px 8px 2px;
+}
+
+.term-select {
+  margin-top: 6px;
+  background: var(--surface-2);
+}
+
+.main-scroll {
+  padding: 20px 24px 48px;
+}
+
+.view-header {
+  min-height: 34px;
+  margin-bottom: 16px;
+}
+
+.view-title {
+  font-size: 19px;
+  letter-spacing: -0.45px;
+}
+
+.view-stack {
+  min-width: 0;
+}
+
+.card,
+.course-card,
+.chart-card {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.015) inset;
+}
+
+.card:hover,
+.course-card:hover {
+  border-color: color-mix(in srgb, var(--border-strong) 76%, var(--border));
+}
+
+.quickadd {
+  padding: 13px 24px 12px;
+  background: rgba(22, 25, 34, 0.97);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.018) inset;
+}
+
+.quickadd-input {
+  min-height: 37px;
+  border-color: color-mix(in srgb, var(--border-strong) 58%, var(--border));
+}
+
+.quickadd-input:focus {
+  background: var(--surface-raised);
+}
+
+.item-row {
+  min-height: 38px;
+  border-color: color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.item-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.16);
+}
+
+.item-main:focus-visible,
+.month-cell:focus-visible,
+.course-item-row:focus-visible,
+.week-due-marker:focus-visible,
+.month-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.empty {
+  min-height: 158px;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(35, 40, 51, 0.24), rgba(22, 25, 34, 0.18));
+}
+
+.empty-title {
+  color: var(--text);
+}
+
+.section-label {
+  margin-top: 20px;
+}
+
+/* Calendar cells are divs so their deadline buttons can be proper keyboard
+   controls without nesting one <button> inside another. */
+.month-cell {
+  border: none;
+  border-radius: 0;
+}
+
+.month-chip {
+  width: 100%;
+  color: var(--text);
+  text-align: left;
+  font-family: inherit;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  margin: 0;
+}
+
+.month-chip:hover {
+  filter: brightness(1.14);
+  background: color-mix(in srgb, var(--course-color, #888) 24%, var(--surface-2));
+}
+
+.week-allday-cell .month-chip {
+  margin: 1px 2px;
+  width: calc(100% - 4px);
+}
+
+.week-due-marker {
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.week-due-marker:hover {
+  background: var(--surface-hover);
+  border-color: var(--course-color, var(--accent));
+}
+
+.course-item-row:focus-visible {
+  background: var(--surface-3);
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.form-error,
+.form-warning {
+  font-size: 10.8px;
+  line-height: 1.4;
+  color: var(--danger);
+}
+
+.form-warning {
+  margin-top: 7px;
+  color: var(--warn);
+}
+
+.optional-label {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+button.danger.armed {
+  background: rgba(255, 107, 107, 0.16);
+  border-color: var(--danger);
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* First-run setup is modal. Feature education after setup is contextual: the
+   actual live control is highlighted and remains visible behind the panel. */
+.onboarding-backdrop {
+  position: fixed;
+  inset: 32px 0 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(110, 168, 254, 0.11), transparent 36%),
+    rgba(8, 10, 14, 0.79);
+  backdrop-filter: blur(5px);
+}
+
+.onboarding-welcome,
+.onboarding-setup {
+  width: min(620px, calc(100vw - 48px));
+  max-height: calc(100vh - 92px);
+  overflow-y: auto;
+  background: linear-gradient(180deg, #1a1e28 0%, var(--surface) 100%);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 28px;
+}
+
+.onboarding-setup {
+  width: min(570px, calc(100vw - 48px));
+}
+
+.onboarding-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 17px;
+  border-radius: 13px;
+  color: var(--accent);
+  background: rgba(110, 168, 254, 0.1);
+  border: 1px solid rgba(110, 168, 254, 0.22);
+}
+
+.onboarding-kicker {
+  color: var(--accent);
+  font-size: 10.5px;
+  font-weight: 750;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.onboarding-welcome h2,
+.onboarding-setup h2,
+.tour-panel h2 {
+  margin: 5px 0 8px;
+  color: #f5f7fb;
+  font-size: 24px;
+  line-height: 1.15;
+  letter-spacing: -0.65px;
+}
+
+.onboarding-welcome > p,
+.onboarding-copy,
+.tour-panel > p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.62;
+}
+
+.onboarding-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 22px 0 26px;
+}
+
+.onboarding-feature-grid > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.onboarding-feature-grid svg {
+  grid-row: 1 / span 2;
+  color: var(--accent);
+  margin-top: 1px;
+}
+
+.onboarding-feature-grid strong {
+  font-size: 12px;
+}
+
+.onboarding-feature-grid span {
+  color: var(--text-faint);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.onboarding-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.onboarding-actions.compact {
+  margin-top: 16px;
+}
+
+.setup-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.setup-existing {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 18px;
+  padding: 13px;
+  border: 1px solid rgba(81, 207, 102, 0.26);
+  border-radius: var(--radius);
+  background: rgba(81, 207, 102, 0.065);
+}
+
+.setup-existing > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setup-existing span:not(.setup-check) {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.setup-check {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  color: #0a1c0e;
+  background: var(--ok);
+  font-weight: 800;
+}
+
+.onboarding-swatches {
+  margin-top: 3px;
+}
+
+.tour-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: var(--text-faint);
+  font-size: 10px;
+  font-family: var(--mono);
+}
+
+.tour-progress-track {
+  height: 3px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.tour-progress-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+.tour-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 80;
+  width: min(405px, calc(100vw - 48px));
+  padding: 18px;
+  background: linear-gradient(180deg, #1c212c 0%, #171a22 100%);
+  border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--border-strong));
+  border-radius: 14px;
+  box-shadow: var(--shadow), 0 0 0 1px rgba(110, 168, 254, 0.04) inset;
+}
+
+.tour-heading-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.tour-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(110, 168, 254, 0.18);
+  border-radius: 9px;
+}
+
+.tour-panel h2 {
+  font-size: 18px;
+  margin-top: 3px;
+}
+
+.tour-panel ul {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.tour-panel li {
+  position: relative;
+  padding-left: 15px;
+}
+
+.tour-panel li::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 0.55em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.tour-tip {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--text-faint);
+  font-size: 10.5px;
+}
+
+.tour-highlight {
+  position: relative;
+  z-index: 62;
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 8px rgba(110, 168, 254, 0.08), 0 0 30px rgba(110, 168, 254, 0.13) !important;
+  border-radius: var(--radius);
+}
+
+@media (max-width: 1100px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main-scroll,
+  .quickadd {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+
+@media (max-width: 980px) {
+  .app {
+    grid-template-columns: 186px minmax(0, 1fr);
+  }
+
+  .onboarding-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}
+
+/* --- Reading weeks / term breaks ----------------------------------------- */
+
+/* A break is a property of the calendar rather than of any one course, so it
+   gets a neutral warm tint instead of a course accent. Deliberately faint:
+   it is background information, not something to act on. */
+:root {
+  --break-tint: rgba(255, 169, 77, 0.07);
+  --break-line: rgba(255, 169, 77, 0.32);
+}
+
+.month-cell.is-break {
+  background: var(--break-tint);
+}
+
+.month-cell.is-break.outside {
+  background: color-mix(in srgb, var(--break-tint) 55%, var(--bg));
+}
+
+.month-break-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--warn);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.week-head-cell.is-break {
+  background: var(--break-tint);
+  box-shadow: inset 0 -2px 0 var(--break-line);
+}
+
+.week-col.is-break {
+  background: var(--break-tint);
+}
+
+/* Rotated so a long name still fits a narrow day column without truncating. */
+.week-break-label {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(90deg);
+  transform-origin: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--warn);
+  opacity: 0.75;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.break-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border-left: 2px solid var(--break-line);
+}
+
+.break-row:hover {
+  background: var(--surface-3);
+}
+
+.break-name {
+  font-weight: 600;
+}
+
+.break-dates {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.break-length {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.break-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+}
+
+/* --- Dashboard ----------------------------------------------------------- */
+
+.dash-grid {
+  display: grid;
+  /* Two shortlists then the mini calendar; collapses to one column when the
+     window is too narrow for three to stay readable. */
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.dash-card {
+  min-width: 0;
+}
+
+.dash-empty {
+  color: var(--text-faint);
+  font-size: 12px;
+  padding: 10px 2px;
+}
+
+.upcoming-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* One card per item: course, title, then the three facts that decide whether
+   to start it — weight, date, days left. */
+.upcoming-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 2px 8px;
+  align-items: center;
+  text-align: left;
+  width: 100%;
+  padding: 7px 9px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--course-color, var(--border-strong));
+  border-radius: var(--radius-sm);
+}
+
+.upcoming-card:hover {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+  border-left-color: var(--course-color, var(--border-strong));
+}
+
+.upcoming-course {
+  grid-row: 1;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--course-color, var(--text-muted));
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upcoming-title {
+  grid-row: 1;
+  font-weight: 600;
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upcoming-meta {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.upcoming-weight {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Marks a weight inferred from the item type rather than entered, so the
+   number is never mistaken for something the user told us. */
+.est-marker {
+  font-family: var(--font);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.upcoming-date {
+  font-variant-numeric: tabular-nums;
+}
+
+.upcoming-days {
+  margin-left: auto;
+  font-weight: 600;
+}
+
+/* Days-left inherits the urgency ramp already used by the item rows. */
+.upcoming-card.urgency-overdue .upcoming-days { color: var(--urgency-overdue); }
+.upcoming-card.urgency-today   .upcoming-days { color: var(--urgency-today); }
+.upcoming-card.urgency-soon    .upcoming-days { color: var(--urgency-soon); }
+.upcoming-card.urgency-week    .upcoming-days { color: var(--urgency-week); }
+
+/* --- Mini calendar ------------------------------------------------------- */
+
+.mini-cal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  min-width: 0;
+}
+
+.mini-cal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.mini-cal-month {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+button.ghost.small {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.mini-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.mini-cal-dow {
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--text-faint);
+  padding-bottom: 3px;
+}
+
+.mini-cal-day {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.mini-cal-day.outside {
+  background: transparent;
+}
+
+.mini-cal-day.outside .mini-cal-num {
+  opacity: 0.35;
+}
+
+.mini-cal-day.is-break {
+  background: var(--break-tint);
+  box-shadow: inset 0 0 0 1px var(--break-line);
+}
+
+.mini-cal-day.is-today .mini-cal-num {
+  background: var(--accent);
+  color: #0b1220;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 17px;
+  height: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-cal-num {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.mini-cal-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 5px;
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.mini-cal-dot {
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.mini-cal-dots.is-overdue,
+.mini-cal-dots.is-overdue .mini-cal-dot {
+  color: var(--urgency-overdue);
+  background-color: var(--urgency-overdue);
+}
+
+.mini-cal-dots.is-overdue {
+  background-color: transparent;
+}
